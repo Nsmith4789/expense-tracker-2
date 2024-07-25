@@ -1,15 +1,35 @@
-import React from "react";
-import SignUpForm from "./components/SignUpForm";
-import SignInForm from "./components/SignInForm";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { auth } from "../../firebase/firebase.config";
+import {
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 
-const Auth = () => {
+const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return unsubscribe;
+  }, []);
+
+  const signUp = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
+  const signIn = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
+  const logout = () => signOut(auth);
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-2xl font-bold mb-4">Authentication</h1>
-      <SignUpForm />
-      <SignInForm />
-    </div>
+    <AuthContext.Provider value={{ user, signUp, signIn, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
-
-export default Auth;
